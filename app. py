@@ -1,0 +1,80 @@
+import telebot
+from telebot import types
+
+TOKEN = 'YOUR_BOT_TOKEN'  # Replace with your bot's token
+bot = telebot.TeleBot(TOKEN)
+
+# Global variables to store user order details
+releases = [
+    {"artist": "Artist 1", "track": "Track 1", "cover": "https://example.com/cover1.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 2", "track": "Track 2", "cover": "https://example.com/cover2.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 3", "track": "Track 3", "cover": "https://example.com/cover3.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 4", "track": "Track 4", "cover": "https://example.com/cover4.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 5", "track": "Track 5", "cover": "https://example.com/cover5.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 6", "track": "Track 6", "cover": "https://example.com/cover6.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 7", "track": "Track 7", "cover": "https://example.com/cover7.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 8", "track": "Track 8", "cover": "https://example.com/cover8.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 9", "track": "Track 9", "cover": "https://example.com/cover9.jpg", "link": "https://www.beatport.com"},
+    {"artist": "Artist 10", "track": "Track 10", "cover": "https://example.com/cover10.jpg", "link": "https://www.beatport.com"},
+]
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    welcome_text = "Welcome to idall lab - electronic music label."
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item1 = types.KeyboardButton("About Idall lab.")
+    item2 = types.KeyboardButton("Releases")
+    item3 = types.KeyboardButton("Send demo")
+    item4 = types.KeyboardButton("Markets")
+    markup.add(item1, item2, item3, item4)
+    bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == "About Idall lab.")
+def about_idall(message):
+    about_text = "Idall Lab is an electronic music label dedicated to releasing the finest electronic sounds." \
+                 " We strive to support talented artists and bring their music to the world."
+    bot.send_message(message.chat.id, about_text)
+    start(message)  # Offer the menu again after sending the message
+
+@bot.message_handler(func=lambda message: message.text == "Releases")
+def list_releases(message):
+    releases_text = "Here are our releases:\n\n"
+    for release in releases:
+        releases_text += f"**Artist:** {release['artist']}\n" \
+                         f"**Track:** {release['track']}\n" \
+                         f"[Cover Image]({release['cover']})\n" \
+                         f"[Download]({release['link']})\n\n"
+                         
+    bot.send_message(message.chat.id, releases_text, parse_mode='Markdown')
+    start(message)  # Offer the menu again after sending the messages
+
+@bot.message_handler(func=lambda message: message.text == "Send demo")
+def send_demo_instructions(message):
+    bot.send_message(message.chat.id, "What is your artist name?")
+    bot.register_next_step_handler(message, handle_artist_name)
+
+def handle_artist_name(message):
+    artist_name = message.text
+    bot.send_message(message.chat.id, "Please upload your track (44100 kHz, 16-bit, fully complete).")
+    
+    # We will handle the input as a document in the next step
+    bot.register_next_step_handler(message, handle_track_upload, artist_name)
+
+def handle_track_upload(message, artist_name):
+    if message.document:
+        # Here you would normally handle saving the uploaded document
+        # For this mockup, we'll just acknowledge the upload
+        bot.send_message(message.chat.id, "Thank you, our manager will get in touch with you within a week.")
+    else:
+        bot.send_message(message.chat.id, "Please upload a valid audio file.")
+        bot.register_next_step_handler(message, handle_track_upload, artist_name)
+
+@bot.message_handler(func=lambda message: message.text == "Markets")
+def markets_info(message):
+    # Placeholder text for markets
+    markets_text = "We distribute our music through various platforms including Beatport, Spotify, Apple Music, and more."
+    bot.send_message(message.chat.id, markets_text)
+    start(message)  # Offer the menu again after sending the message
+
+# Running the bot
+bot.polling()
